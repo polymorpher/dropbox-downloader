@@ -1,5 +1,9 @@
 # Dropbox Downloader
 
+## Updates
+
+- 4/23/2021: @polymorpher updated code to support more than 500 files per folder
+
 ## Summary
 
 #### Python CLI tool with two functions
