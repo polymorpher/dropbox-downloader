@@ -12,18 +12,19 @@ Options:
   -h --help     Show this screen.
   --version     Show version.
 """
-import dropbox
-import dropbox.exceptions
 import os.path
-
-from docopt import docopt
-from dropbox.files import FolderMetadata, FileMetadata
 from configparser import ConfigParser
 from queue import Queue
 
+import dropbox
+import dropbox.exceptions
+from docopt import docopt
+from dropbox.files import FolderMetadata, FileMetadata
+
 from dropbox_downloader.DiskUsage import DiskUsage
-from dropbox_downloader.Downloader import Downloader
 from dropbox_downloader.DownloadWorker import DownloadWorker
+from dropbox_downloader.Downloader import Downloader
+from dropbox_utils import list_all_files
 
 
 class DropboxDownloader:
@@ -41,8 +42,8 @@ class DropboxDownloader:
         d = Downloader(self._base_path, self._dbx, self._dl_dir, self._to_dl)
         queue = Queue()
 
-        files_and_folders = d.list_files_and_folders(path)
-        n_files_and_folders = len(files_and_folders.entries)
+        entries = d.list_files_and_folders(path)
+        n_files_and_folders = len(entries)
         n_threads = n_files_and_folders if n_files_and_folders < 8 else 8
 
         # Create 8 ListWorker threads
@@ -52,7 +53,7 @@ class DropboxDownloader:
             worker.daemon = True
             worker.start()
 
-        for f in files_and_folders.entries:
+        for f in entries:
             if isinstance(f, FolderMetadata):
                 queue.put(f.path_lower)
             elif isinstance(f, FileMetadata):
@@ -72,13 +73,13 @@ class DropboxDownloader:
 
     def ls(self, path: str = ''):
         """Print contents of a given folder path in text columns"""
-        files_and_folders = self._dbx.files_list_folder(path)
+        entries = list_all_files(self._dbx, path)
         print('Listing path "{}"...'.format(path))
         file_list = [{
-            'id':         f.id,
-            'name':       f.name,
+            'id': f.id,
+            'name': f.name,
             'path_lower': f.path_lower
-        } for f in files_and_folders.entries]
+        } for f in entries]
 
         # get column sizes for formatting
         max_len_id = max(len(f['id']) for f in file_list)

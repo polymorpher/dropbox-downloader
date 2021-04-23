@@ -1,7 +1,9 @@
 import os
+from pathlib import Path
 
 from dropbox.files import FolderMetadata, FileMetadata
-from pathlib import Path
+
+from dropbox_utils import list_all_files
 
 
 class Downloader:
@@ -52,8 +54,8 @@ class Downloader:
         :param path:str
         :return: void
         """
-        files_and_folders = self.list_files_and_folders(path)
-        for f in files_and_folders.entries:
+        entries = self.list_files_and_folders(path)
+        for f in entries:
             if path == '' and self._to_dl and f.name not in self._to_dl:
                 return  # only download f.name in self._to_dl
             if isinstance(f, FolderMetadata):
@@ -66,4 +68,4 @@ class Downloader:
 
     def list_files_and_folders(self, path):
         """Wrapper around dbx.files_list_folder"""
-        return self._dbx.files_list_folder(path)
+        return list_all_files(self._dbx, path)
